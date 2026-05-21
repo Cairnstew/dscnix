@@ -59,18 +59,47 @@ jobs:
               Write-Host "`n=== $name ==="
 
               # validate — parse JSON result, don't trust exit code alone
-              $raw = & $dsc config validate -f $_.FullName -o pretty-json 2>&1
-              $json = $raw | Where-Object { $_ -match '^\s*[\{\[]' } | ConvertFrom-Json
-              if ($json.valid -eq $true) {
-                  Write-Host "  validate: PASS"
-              } elseif ($raw -match "Resource type not found|Resource not found") {
-                  Write-Host "  validate: PASS (structurally valid; resource not found)"
-              } else {
-                  Write-Host "  validate: FAIL"
-                  Write-Host ($raw | Out-String)
+              $raw = & $dsc config validate -f $_.FullName -o pretty-json 2>&1 | Out-String
+              # Strip ANSI escape codes
+              $raw = $raw -replace '\x1b\[[0-9;]*[mK]', ''
+              # Extract the JSON object (everything from first { to last })
+              $jsonText = [regex]::Match($raw, '(?s)\{.*\}').Value
+              try {
+                  $json = $jsonText | ConvertFrom-Json
+                  if ($json.valid -eq $true) {
+                      Write-Host "  validate: PASS"
+                  } elseif ($raw -match "Resource type not found|Resource not found") {
+                      Write-Host "  validate: PASS (structurally valid; resource not found)"
+                  } else {
+                      Write-Host "  validate: FAIL"
+                      Write-Host $raw
+                      $fail = $true
+                  }
+              } catch {
+                  Write-Host "  validate: FAIL (could not parse output)"
+                  Write-Host $raw
                   $fail = $true
               }
 
-              # get/test remain informational as before...
+              # get — informational; may need PowerShell modules for legacy resources
+              $getRaw = & $dsc config get -f $_.FullName -o pretty-json 2>&1 | Out-String
+              $getCode = $LASTEXITCODE
+              if ($getCode -eq 0) {
+                  Write-Host "  get: PASS"
+              } else {
+                  Write-Host "  get: SKIP/FAIL (exit $getCode; output below)"
+                  Write-Host ($getRaw -replace '\x1b\[[0-9;]*[mK]', '')
+              }
+
+              # test — informational; may need PowerShell modules for legacy resources
+              $testRaw = & $dsc config test -f $_.FullName -o pretty-json 2>&1 | Out-String
+              $testCode = $LASTEXITCODE
+              if ($testCode -eq 0) {
+                  Write-Host "  test: PASS"
+              } else {
+                  Write-Host "  test: SKIP/FAIL (exit $testCode; output below)"
+                  Write-Host ($testRaw -replace '\x1b\[[0-9;]*[mK]', '')
+              }
           }
+
           if ($fail) { exit 1 }

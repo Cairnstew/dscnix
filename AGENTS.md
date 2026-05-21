@@ -7,7 +7,8 @@ A Nix flake that generates **DSC v3 YAML** configuration documents from the NixO
 - Run all Nix commands from the `dscnix/` directory (the flake root).
 - Build the example: `nix build .#example --show-trace`
 - Validate the flake: `nix flake check`
-- There are no tests, no CI, and no formatter config. Verification is purely `nix flake check` + `nix build`.
+- Run the test suite: `./tests/validate.sh`
+- There is no CI or formatter config. Verification is `nix flake check` + `nix build` + `./tests/validate.sh`.
 
 ## Architecture
 
@@ -17,7 +18,7 @@ A Nix flake that generates **DSC v3 YAML** configuration documents from the NixO
   - `configurationName` is emitted as a YAML comment header.
   - `nodes` and `imports` are legacy PowerShell DSC concepts and are **not** emitted in YAML output.
 - `modules/resources/*.nix` — higher-level helpers that map into `dsc.resources` via `lib.mkMerge` + `mapAttrsToList`.
-  - Legacy PSDscResources: `dsc.windowsFeatures`, `dsc.files`, `dsc.services`
+  - Legacy PSDscResources: `dsc.windowsFeatures`, `dsc.files`, `dsc.services` (wrapped in `Microsoft.DSC/PowerShell` adapter)
   - Native DSC v3: `dsc.registry`, `dsc.windowsServices`, `dsc.firewallRules`, `dsc.optionalFeatures`, `dsc.featuresOnDemand`, `dsc.runCommands`, `dsc.powerShellScripts`, `dsc.windowsPowerShellScripts`, `dsc.osInfo`, `dsc.rebootPending`
 
 ## Adding a new resource type
@@ -25,10 +26,15 @@ A Nix flake that generates **DSC v3 YAML** configuration documents from the NixO
 1. Create `modules/resources/<name>.nix`.
 2. Import it in `modules/core.nix`.
 3. Define high-level `options.dsc.<name>` and use `config.dsc.resources = mkMerge (mapAttrsToList …)` to translate into `dsc.resources` entries with `type = "…"`.
-4. Resource names must be unique across all types. `emit.nix` resolves `dependsOn` as `<Type>:<Name>` by looking up the dependency name in `config.dsc.resources`. If two resources share a name, the lookup is ambiguous.
+4. Resource names must be unique across all types. `emit.nix` resolves `dependsOn` as `[resourceId('Type','Name')]` by looking up the dependency name in `config.dsc.resources`.
 
 ## YAML serialization details
 
 - All strings are single-quoted in YAML (`'…'`). Single quotes inside are escaped by doubling (`''`).
 - Windows paths with backslashes are preserved literally because single-quoted YAML strings do not interpret escape sequences. Write `C:\path` in Nix strings and the YAML output will contain `C:\path`.
 - Nested objects (e.g., `valueData`, `rules`) and lists (e.g., `profiles`, `features`) are emitted as YAML block mappings and sequences.
+- `dependsOn` uses the DSC v3 `[resourceId('Type','Name')]` syntax.
+
+## Legacy PowerShell DSC resources
+
+Classic MOF-based resources (WindowsFeature, File, Service) are automatically wrapped in a `Microsoft.DSC/PowerShell` adapter block so they can coexist with native DSC v3 resources in the same YAML document. The inner resource types use `PSDscResources/MSFT_WindowsFeature`, `PSDesiredStateConfiguration/File`, and `PSDesiredStateConfiguration/Service`.

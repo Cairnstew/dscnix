@@ -194,6 +194,7 @@ for entry in root.findall("a:entry", ns):
         inherit dsc dscSearch;
         example = self.lib.evalDscConfiguration [ ./configurations/webserver.nix ];
         exampleWorkstation = self.lib.evalDscConfiguration [ ./configurations/windows-workstation.nix ];
+        exampleNative = self.lib.evalDscConfiguration [ ./configurations/native-windows.nix ];
       };
 
       devShells.x86_64-linux.default = pkgs.mkShell {

@@ -3,8 +3,6 @@ with lib;
 {
   dsc = {
     configurationName = "WebServer";
-    nodes = [ "web-01" "web-02" ];
-    imports = [ "PSDscResources" ];
 
     windowsFeatures = {
       "Web-Server" = {

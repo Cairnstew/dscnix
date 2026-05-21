@@ -3,8 +3,6 @@ with lib;
 {
   dsc = {
     configurationName = "WindowsWorkstation";
-    nodes = [ "workstation-01" ];
-    imports = [ "PSDscResources" ];
 
     # Windows Optional Features (native DSC v3)
     optionalFeatures = {
@@ -65,7 +63,7 @@ with lib;
       };
     };
 
-    # Legacy PSDscResources (still supported)
+    # Legacy PSDscResources (wrapped in Microsoft.DSC/PowerShell adapter)
     windowsFeatures = {
       "Telnet-Client" = {
         ensure = "Absent";

@@ -19,21 +19,36 @@ in
           type = types.listOf types.str;
           default = [];
         };
+        dependsOn = mkOption {
+          type = types.listOf types.str;
+          default = [];
+          description = "Dependencies on other resources.";
+        };
       };
     }));
     default = {};
+    description = "Windows features via the PowerShell DSC adapter (PSDscResources).";
   };
 
   config.dsc.resources = mkMerge (
     mapAttrsToList (name: feature: {
       "${name}" = {
-        type = "WindowsFeature";
+        type = "Microsoft.DSC/PowerShell";
         properties = {
-          Name = name;
-          Ensure = feature.ensure;
-        } // optionalAttrs (feature.include != []) {
-          IncludeAllSubFeature = true;
+          resources = [
+            {
+              name = name;
+              type = "PSDscResources/MSFT_WindowsFeature";
+              properties = {
+                Name = name;
+                Ensure = feature.ensure;
+              } // optionalAttrs (feature.include != []) {
+                IncludeAllSubFeature = true;
+              };
+            }
+          ];
         };
+        dependsOn = feature.dependsOn;
       };
     }) cfg.windowsFeatures
   );

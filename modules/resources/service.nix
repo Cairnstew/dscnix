@@ -18,20 +18,30 @@ in
         dependsOn = mkOption {
           type = types.listOf types.str;
           default = [];
+          description = "Dependencies on other resources.";
         };
       };
     }));
     default = {};
+    description = "Windows services via the PowerShell DSC adapter (PSDesiredStateConfiguration).";
   };
 
   config.dsc.resources = mkMerge (
     mapAttrsToList (name: service: {
       "${name}" = {
-        type = "Service";
+        type = "Microsoft.DSC/PowerShell";
         properties = {
-          Name = name;
-          Ensure = service.ensure;
-          State = service.state;
+          resources = [
+            {
+              name = name;
+              type = "PSDesiredStateConfiguration/Service";
+              properties = {
+                Name = name;
+                Ensure = service.ensure;
+                State = service.state;
+              };
+            }
+          ];
         };
         dependsOn = service.dependsOn;
       };

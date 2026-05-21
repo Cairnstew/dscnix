@@ -21,21 +21,31 @@ in
         dependsOn = mkOption {
           type = types.listOf types.str;
           default = [];
+          description = "Dependencies on other resources.";
         };
       };
     }));
     default = {};
+    description = "File resources via the PowerShell DSC adapter (PSDesiredStateConfiguration).";
   };
 
   config.dsc.resources = mkMerge (
     mapAttrsToList (name: file: {
       "${name}" = {
-        type = "File";
+        type = "Microsoft.DSC/PowerShell";
         properties = {
-          DestinationPath = file.destinationPath;
-          Ensure = file.ensure;
-        } // optionalAttrs (file.sourcePath != null) {
-          SourcePath = file.sourcePath;
+          resources = [
+            {
+              name = name;
+              type = "PSDesiredStateConfiguration/File";
+              properties = {
+                DestinationPath = file.destinationPath;
+                Ensure = file.ensure;
+              } // optionalAttrs (file.sourcePath != null) {
+                SourcePath = file.sourcePath;
+              };
+            }
+          ];
         };
         dependsOn = file.dependsOn;
       };

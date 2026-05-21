@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-and-test-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v27
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+
+      - name: Flake check
+        run: nix flake check
+
+      - name: Run test suite
+        run: ./tests/validate.sh
+
+      - name: Build configs for Windows testing
+        run: |
+          mkdir -p built-configs
+          cp "$(nix build .#example --json | jq -r '.[0].outputs.out')" built-configs/example-webserver.yaml
+          cp "$(nix build .#exampleWorkstation --json | jq -r '.[0].outputs.out')" built-configs/example-workstation.yaml
+          cp "$(nix build .#exampleNative --json | jq -r '.[0].outputs.out')" built-configs/example-native.yaml
+
+      - name: Upload configs
+        uses: actions/upload-artifact@v4
+        with:
+          name: dsc-configs
+          path: built-configs/*.yaml
+
+  test-windows:
+    runs-on: windows-latest
+    needs: build-and-test-linux
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dsc-configs
+          path: configs
+
+      - name: Download DSC v3 for Windows
+        shell: pwsh
+        run: |
+          $url = "https://github.com/PowerShell/DSC/releases/download/v3.1.0/DSC-3.1.0-x86_64-pc-windows-msvc.zip"
+          Invoke-WebRequest -Uri $url -OutFile dsc.zip
+          Expand-Archive -Path dsc.zip -DestinationPath dsc
+
+      - name: Test configs on Windows
+        shell: pwsh
+        run: |
+          $dsc = "dsc/dsc.exe"
+          $fail = $false
+          Get-ChildItem configs -Filter "*.yaml" | ForEach-Object {
+              $name = $_.Name
+              Write-Host "`n=== $name ==="
+
+              # validate — must pass
+              & $dsc config validate -f $_.FullName -o pretty-json
+              $code = $LASTEXITCODE
+              if ($code -ne 0) {
+                  Write-Host "  validate: FAIL (exit $code)"
+                  $fail = $true
+              } else {
+                  Write-Host "  validate: PASS"
+              }
+
+              # get — informational; may need PowerShell modules for legacy resources
+              & $dsc config get -f $_.FullName -o pretty-json > "$name-get.log" 2>&1
+              $code = $LASTEXITCODE
+              if ($code -eq 0) {
+                  Write-Host "  get: PASS"
+              } else {
+                  Write-Host "  get: SKIP/FAIL (exit $code; see $name-get.log)"
+              }
+
+              # test — informational; may need PowerShell modules for legacy resources
+              & $dsc config test -f $_.FullName -o pretty-json > "$name-test.log" 2>&1
+              $code = $LASTEXITCODE
+              if ($code -eq 0) {
+                  Write-Host "  test: PASS"
+              } else {
+                  Write-Host "  test: SKIP/FAIL (exit $code; see $name-test.log)"
+              }
+          }
+
+          if ($fail) { exit 1 }

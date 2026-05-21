@@ -207,6 +207,7 @@ for entry in root.findall("a:entry", ns):
           curl
           python3
           git
+          act
         ];
 
         shellHook = ''

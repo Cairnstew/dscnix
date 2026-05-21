@@ -3,6 +3,7 @@ set -euo pipefail
 
 # Test suite for dscnix generated configurations
 # Validates that generated YAML configs are structurally correct using dsc config validate
+# Also attempts dsc config get and test, skipping on Linux where Windows resources are unavailable
 
 BUILD_DIR="$(mktemp -d /tmp/dscnix-test-XXXXXX)"
 trap "rm -rf ${BUILD_DIR}" EXIT
@@ -13,6 +14,7 @@ echo "  ────────────────────────
 
 PASS=0
 FAIL=0
+SKIP=0
 
 # Validate a nix build output using dsc config validate
 validate_config() {
@@ -103,14 +105,72 @@ validate_config() {
   return 1
 }
 
+# Attempt a non-mutating dsc config command (get or test)
+# On Linux, missing Windows resources is expected and skipped.
+run_dsc_command() {
+  local name="$1"
+  local cmd="$2"
+  local out="${BUILD_DIR}/${name}.yaml"
+  local log="${BUILD_DIR}/${name}-${cmd}.log"
+
+  if [ ! -f "${out}" ]; then
+    echo "  SKIP: dsc config ${cmd} — build/validate failed for ${name}"
+    SKIP=$((SKIP + 1))
+    return 0
+  fi
+
+  echo "  Running: dsc config ${cmd} -f ${out} ..."
+
+  set +e
+  nix develop --command bash -c "dsc config ${cmd} -f '${out}' -o pretty-json" >"${log}" 2>&1
+  exit_code=$?
+  set -e
+
+  # Strip ANSI escape codes from log
+  sed -i 's/\x1b\[[0-9;]*[mK]//g' "${log}"
+
+  if [ $exit_code -eq 0 ]; then
+    echo "  PASS (dsc config ${cmd} succeeded)"
+    PASS=$((PASS + 1))
+    return 0
+  fi
+
+  # On Linux, the DSC binary cannot resolve Windows-specific resource providers.
+  # We treat resource-not-found (and related dsc Linux quirks) as an expected skip.
+  if [ "$(uname -s)" = "Linux" ]; then
+    local other_errors
+    other_errors=$(grep "ERROR" "${log}" | grep -v "Could not read" | grep -v "Resource type not found" | grep -v "Resource not found" | grep -v "Circular dependency" || true)
+    if [ -z "${other_errors}" ]; then
+      echo "  SKIP (dsc config ${cmd} — Windows resources unavailable on Linux)"
+      SKIP=$((SKIP + 1))
+      return 0
+    fi
+  fi
+
+  echo "  FAIL: dsc config ${cmd} failed:"
+  grep "ERROR" "${log}" | sed 's/^/    /' || true
+  echo "  Full output:"
+  cat "${log}" | sed 's/^/    /'
+  FAIL=$((FAIL + 1))
+  return 1
+}
+
 # Test all examples
 validate_config "example-webserver" ".#example"
+run_dsc_command "example-webserver" "get"
+run_dsc_command "example-webserver" "test"
+
 validate_config "example-workstation" ".#exampleWorkstation"
+run_dsc_command "example-workstation" "get"
+run_dsc_command "example-workstation" "test"
+
 validate_config "example-native" ".#exampleNative"
+run_dsc_command "example-native" "get"
+run_dsc_command "example-native" "test"
 
 echo ""
 echo "  ──────────────────────────────────────────────"
-echo "  Results: ${PASS} passed, ${FAIL} failed"
+echo "  Results: ${PASS} passed, ${FAIL} failed, ${SKIP} skipped"
 echo ""
 
 if [ ${FAIL} -gt 0 ]; then

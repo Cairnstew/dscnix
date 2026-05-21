@@ -19,4 +19,4 @@ let
 
   emit = import ./emit.nix { inherit lib config; };
 in
-pkgs.writeText "dsc-configuration.ps1" emit
+pkgs.writeText "dsc-configuration.yaml" emit

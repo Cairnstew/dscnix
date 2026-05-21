@@ -5,6 +5,16 @@ with lib;
     ./resources/windowsfeature.nix
     ./resources/file.nix
     ./resources/service.nix
+    ./resources/registry.nix
+    ./resources/windowsService.nix
+    ./resources/firewall.nix
+    ./resources/optionalFeatures.nix
+    ./resources/featuresOnDemand.nix
+    ./resources/runcommandonset.nix
+    ./resources/powershellScript.nix
+    ./resources/windowsPowerShellScript.nix
+    ./resources/osinfo.nix
+    ./resources/rebootpending.nix
   ];
 
   options.dsc = {

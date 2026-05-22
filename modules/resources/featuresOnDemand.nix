@@ -22,7 +22,7 @@ in
       };
     }));
     default = {};
-    description = "Windows Features on Demand (capabilities) using DISM (Microsoft.Windows/FeatureOnDemandList).";
+    description = "Windows Features on Demand (capabilities) using DISM (Microsoft.Windows/FeatureOnDemandList). NOTE: This resource is read-only (Get/Test only) in DSC v3.1.0. Cannot set state.";
   };
 
   config.dsc.resources = mkIf (cfg.featuresOnDemand != {}) {

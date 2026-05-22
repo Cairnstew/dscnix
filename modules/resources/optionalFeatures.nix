@@ -24,7 +24,7 @@ in
       };
     }));
     default = {};
-    description = "Windows Optional Features using DISM (Microsoft.Windows/OptionalFeatureList).";
+    description = "Windows Optional Features using DISM (Microsoft.Windows/OptionalFeatureList). NOTE: This resource is read-only (Get/Test only) in DSC v3.1.0. Cannot set state.";
   };
 
   config.dsc.resources = mkIf (cfg.optionalFeatures != {}) {

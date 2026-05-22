@@ -63,4 +63,20 @@ nix run github:Cairnstew/dscnix -- ./my-config.nix > output.yaml
 
 ## Legacy PowerShell DSC resources
 
-Classic MOF-based resources (WindowsFeature, File, Service) are automatically wrapped in a `Microsoft.DSC/PowerShell` adapter block so they can coexist with native DSC v3 resources in the same YAML document. The inner resource types use `PSDscResources/MSFT_WindowsFeature`, `PSDesiredStateConfiguration/File`, and `PSDesiredStateConfiguration/Service`.
+Classic MOF-based resources (WindowsFeature, File, Service) are automatically wrapped in a `Microsoft.DSC/PowerShell` adapter block so they can coexist with native DSC v3 resources in the same YAML document. The inner resource types use `PSDscResources/WindowsFeature`, `PSDesiredStateConfiguration/File`, and `PSDesiredStateConfiguration/Service`.
+
+## Read-only resources in DSC v3.1.0
+
+The following resources are **read-only** (support Get/Test operations only) and cannot be used to set state:
+
+- `Microsoft.Windows/FirewallRuleList` - Use for auditing only
+- `Microsoft.Windows/OptionalFeatureList` - Use for auditing only  
+- `Microsoft.Windows/FeatureOnDemandList` - Use for auditing only
+- `Microsoft.Windows/RebootPending` - Assertion resource only
+- `Microsoft/OSInfo` - Assertion resource only
+
+To use read-only resources for assertions, wrap them in a `Microsoft.DSC/Assertion` block.
+
+## OpenSSH resources dependency
+
+The `Microsoft.OpenSSH.SSHD/*` resources require the OpenSSH optional feature to be installed on Windows. They are not available by default.

@@ -122,21 +122,21 @@ See the [`examples/`](./examples/) directory for more reference configurations.
 
 ## Supported Resources
 
-| Nix option | DSC v3 resource type | Category |
-|---|---|---|
-| `dsc.registry` | `Microsoft.Windows/Registry` | Native |
-| `dsc.windowsServices` | `Microsoft.Windows/Service` | Native |
-| `dsc.firewallRules` | `Microsoft.Windows/FirewallRuleList` | Native |
-| `dsc.optionalFeatures` | `Microsoft.Windows/OptionalFeatureList` | Native |
-| `dsc.featuresOnDemand` | `Microsoft.Windows/FeatureOnDemandList` | Native |
-| `dsc.runCommands` | `Microsoft.DSC.Transitional/RunCommandOnSet` | Native |
-| `dsc.powerShellScripts` | `Microsoft.DSC.Transitional/PowerShellScript` | Native |
-| `dsc.windowsPowerShellScripts` | `Microsoft.DSC.Transitional/WindowsPowerShellScript` | Native |
-| `dsc.osInfo` | `Microsoft/OSInfo` | Native |
-| `dsc.rebootPending` | `Microsoft.Windows/RebootPending` | Native |
-| `dsc.windowsFeatures` | `PSDscResources/MSFT_WindowsFeature` | Legacy (wrapped) |
-| `dsc.files` | `PSDesiredStateConfiguration/File` | Legacy (wrapped) |
-| `dsc.services` | `PSDesiredStateConfiguration/Service` | Legacy (wrapped) |
+| Nix option | DSC v3 resource type | Category | Notes |
+|---|---|---|---|
+| `dsc.registry` | `Microsoft.Windows/Registry` | Native | Settable |
+| `dsc.windowsServices` | `Microsoft.Windows/Service` | Native | Settable |
+| `dsc.firewallRules` | `Microsoft.Windows/FirewallRuleList` | Native | **Read-only** (Get/Test only) |
+| `dsc.optionalFeatures` | `Microsoft.Windows/OptionalFeatureList` | Native | **Read-only** (Get/Test only) |
+| `dsc.featuresOnDemand` | `Microsoft.Windows/FeatureOnDemandList` | Native | **Read-only** (Get/Test only) |
+| `dsc.runCommands` | `Microsoft.DSC.Transitional/RunCommandOnSet` | Native | Settable |
+| `dsc.powerShellScripts` | `Microsoft.DSC.Transitional/PowerShellScript` | Native | Settable |
+| `dsc.windowsPowerShellScripts` | `Microsoft.DSC.Transitional/WindowsPowerShellScript` | Native | Settable |
+| `dsc.osInfo` | `Microsoft/OSInfo` | Native | Read-only |
+| `dsc.rebootPending` | `Microsoft.Windows/RebootPending` | Native | Read-only |
+| `dsc.windowsFeatures` | `PSDscResources/WindowsFeature` | Legacy (wrapped) | Settable |
+| `dsc.files` | `PSDesiredStateConfiguration/File` | Legacy (wrapped) | Settable |
+| `dsc.services` | `PSDesiredStateConfiguration/Service` | Legacy (wrapped) | Settable |
 
 ## Development
 

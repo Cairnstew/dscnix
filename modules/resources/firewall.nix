@@ -78,7 +78,7 @@ in
       };
     }));
     default = {};
-    description = "Windows Firewall rules.";
+    description = "Windows Firewall rules. NOTE: Uses Microsoft.Windows/FirewallRuleList which is read-only (Get/Test only) in DSC v3.1.0. Cannot set state.";
   };
 
   config.dsc.resources = mkIf (cfg.firewallRules != {}) {

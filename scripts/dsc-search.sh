@@ -37,17 +37,9 @@ case "${1:-help}" in
     echo "  Built-in DSC v3 resources (Windows)"
     echo "  ───────────────────────────────────"
      LIST="Microsoft.Windows/Registry
-Microsoft.Windows/RegistryList
 Microsoft.Windows/Service
-Microsoft.Windows/OptionalFeatureList
-Microsoft.Windows/FeatureOnDemandList
-Microsoft.Windows/FirewallRuleList
 Microsoft.Windows/RebootPending
 Microsoft.Windows/WindowsPowerShell
-Microsoft.OpenSSH.SSHD/Subsystem
-Microsoft.OpenSSH.SSHD/SubsystemList
-Microsoft.OpenSSH.SSHD/Windows
-Microsoft.OpenSSH.SSHD/sshd_config
 Microsoft/OSInfo
 Microsoft.DSC/Group
 Microsoft.DSC/Assertion
@@ -55,7 +47,18 @@ Microsoft.DSC/Include
 Microsoft.DSC.Transitional/RunCommandOnSet
 Microsoft.DSC.Transitional/PowerShellScript
 Microsoft.DSC.Transitional/WindowsPowerShellScript
-Microsoft.DSC.Debug/Echo"
+Microsoft.DSC.Debug/Echo
+
+# NOTE: The following resources require the OpenSSH optional feature on Windows:
+# Microsoft.OpenSSH.SSHD/Subsystem
+# Microsoft.OpenSSH.SSHD/SubsystemList
+# Microsoft.OpenSSH.SSHD/Windows
+# Microsoft.OpenSSH.SSHD/sshd_config
+
+# NOTE: The following *List resources are read-only (Get/Test only) in DSC v3.1.0:
+# Microsoft.Windows/OptionalFeatureList
+# Microsoft.Windows/FeatureOnDemandList
+# Microsoft.Windows/FirewallRuleList"
 
     MATCHES=$(echo "$LIST" | grep -i "${FILTER}" || true)
     if [ -n "$MATCHES" ]; then

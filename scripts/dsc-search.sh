@@ -18,6 +18,17 @@ usage() {
   echo ""
 }
 
+# Helper function for API calls with error handling
+api_call() {
+  local url="$1"
+  local description="$2"
+  if ! @CURL@ -sf "$url"; then
+    echo "  Error: Failed to fetch ${description}." >&2
+    echo "         Check your network connection and try again." >&2
+    return 1
+  fi
+}
+
 case "${1:-help}" in
 
   builtin)
@@ -62,9 +73,9 @@ Microsoft.DSC.Debug/Echo"
     echo ""
     echo "  PowerShell Gallery — searching: '$TERM'"
     echo "  ────────────────────────────────────────"
-    @CURL@ -sf \
-      "https://www.powershellgallery.com/api/v2/Search()?q=tags:'DSC'+'${TERM}'&\$orderby=DownloadCount+desc&\$top=20" \
-      | @PYTHON3@ -c '
+    if ! api_call "https://www.powershellgallery.com/api/v2/Search()?q=tags:'DSC'+'${TERM}'&\$orderby=DownloadCount+desc&\$top=20" "PowerShell Gallery"; then
+      exit 1
+    fi | @PYTHON3@ -c '
 import sys, xml.etree.ElementTree as ET
 ns = {"d": "http://schemas.microsoft.com/ado/2007/08/dataservices",
       "m": "http://schemas.microsoft.com/ado/2007/08/dataservices/metadata",
@@ -89,15 +100,16 @@ for entry in root.findall("a:entry", ns):
     echo ""
     echo "  winget-dsc community resources (github.com/microsoft/winget-dsc)"
     echo "  ──────────────────────────────────────────────────────────────────"
-    @CURL@ -sf \
-      "https://api.github.com/repos/microsoft/winget-dsc/contents/resources" \
-      | @JQ@ -r '.[] | select(.type=="dir") | .name' \
+    if ! api_call "https://api.github.com/repos/microsoft/winget-dsc/contents/resources" "winget-dsc repository"; then
+      exit 1
+    fi | @JQ@ -r '.[] | select(.type=="dir") | .name' \
       | while IFS= read -r module; do
           echo ""
           echo "  [$module]"
-          @CURL@ -sf \
-            "https://api.github.com/repos/microsoft/winget-dsc/contents/resources/${module}" \
-            | @JQ@ -r '.[] | select(.name | endswith(".psm1")) | .name' \
+          if ! api_call "https://api.github.com/repos/microsoft/winget-dsc/contents/resources/${module}" "module contents for ${module}"; then
+            echo "    (failed to fetch module contents)"
+            continue
+          fi | @JQ@ -r '.[] | select(.name | endswith(".psm1")) | .name' \
             | sed 's/^/    /'
         done
     echo ""
@@ -107,9 +119,9 @@ for entry in root.findall("a:entry", ns):
     echo ""
     echo "  DSC v3 JSON schemas"
     echo "  ───────────────────"
-    @CURL@ -sf \
-      "https://api.github.com/repos/PowerShell/DSC/contents/schemas/v3" \
-      | @JQ@ -r '.[].name' \
+    if ! api_call "https://api.github.com/repos/PowerShell/DSC/contents/schemas/v3" "DSC schemas"; then
+      exit 1
+    fi | @JQ@ -r '.[].name' \
       | sed 's/^/  /'
     echo ""
     ;;
@@ -118,9 +130,9 @@ for entry in root.findall("a:entry", ns):
     echo ""
     echo "  DSC v3 GitHub releases"
     echo "  ──────────────────────"
-    @CURL@ -sf \
-      "https://api.github.com/repos/PowerShell/DSC/releases?per_page=10" \
-      | @JQ@ -r '.[] | "  \(.tag_name)  (\(.published_at[:10]))  \(if .prerelease then \"[pre]\" else \"[stable]\" end)"'
+    if ! api_call "https://api.github.com/repos/PowerShell/DSC/releases?per_page=10" "DSC releases"; then
+      exit 1
+    fi | @JQ@ -r '.[] | "  \(.tag_name)  (\(.published_at[:10]))  \(if .prerelease then \"[pre]\" else \"[stable]\" end)"'
     echo ""
     ;;
 

@@ -16,7 +16,7 @@ A Nix flake that generates **DSC v3 YAML** configuration documents from the NixO
 
 ```nix
 {
-  inputs.dscnix.url = "github:seanc/dscnix";
+  inputs.dscnix.url = "github:Cairnstew/dscnix";
 
   outputs = { self, nixpkgs, dscnix }:
     let
@@ -31,7 +31,7 @@ A Nix flake that generates **DSC v3 YAML** configuration documents from the NixO
 
 Or via the CLI from another repo:
 ```bash
-nix run github:seanc/dscnix -- ./my-config.nix > output.yaml
+nix run github:Cairnstew/dscnix -- ./my-config.nix > output.yaml
 ```
 
 ## Architecture

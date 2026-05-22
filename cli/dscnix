@@ -16,7 +16,7 @@ Options:
 Examples:
   dscnix ./my-config.nix > output.yaml
   dscnix ./base.nix ./overrides.nix > output.yaml
-  nix run github:seanc/dscnix -- ./my-config.nix > output.yaml
+  nix run github:Cairnstew/dscnix -- ./my-config.nix > output.yaml
 EOF
 }
 

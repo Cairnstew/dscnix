@@ -38,7 +38,7 @@ in
           resources = [
             {
               name = name;
-              type = "PSDscResources/MSFT_WindowsFeature";
+              type = "PSDscResources/WindowsFeature";
               properties = {
                 Name = name;
                 Ensure = feature.ensure;

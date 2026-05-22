@@ -23,7 +23,7 @@ with lib;
       W3SVC = {
         ensure = "Present";
         state = "Running";
-        dependsOn = [ "indexHtml" ];
+        dependsOn = [ "Web-Server" ];
       };
     };
   };

@@ -105,6 +105,66 @@ validate_config() {
   return 1
 }
 
+# Assert dependency ordering in a generated YAML file.
+# Usage: assert_dependencies <name> <drv>
+assert_dependencies() {
+  local name="$1"
+  local drv="$2"
+  local out="${BUILD_DIR}/${name}-deps.yaml"
+
+  echo ""
+  echo "  [TEST] ${name} dependency ordering"
+
+  nix build "${drv}" --out-link "${BUILD_DIR}/${name}-dep-result" 2>/dev/null || {
+    echo "  FAIL: Build failed for ${name}"
+    FAIL=$((FAIL + 1))
+    return 1
+  }
+
+  cp "${BUILD_DIR}/${name}-dep-result" "${out}"
+
+  # File resource must depend on WindowsFeature
+  if ! grep -q "\[resourceId('Microsoft.DSC/PowerShell','Web-Server')]" "${out}"; then
+    echo "  FAIL: Could not find expected resourceId for Web-Server in ${out}"
+    FAIL=$((FAIL + 1))
+    return 1
+  fi
+
+  # indexHtml depends on Web-Server
+  local indexhtml_block
+  indexhtml_block=$(awk "/^  - name: .indexHtml/ { found=1 } found && (!/^  - name: / || /indexHtml/) { print } /^  - name: / && !/indexHtml/ { found=0 }" "${out}")
+  if ! echo "${indexhtml_block}" | grep -q "\[resourceId('Microsoft.DSC/PowerShell','Web-Server')]"; then
+    echo "  FAIL: indexHtml does not correctly depend on Web-Server"
+    echo "  indexHtml block:"
+    echo "${indexhtml_block}" | sed 's/^/    /'
+    FAIL=$((FAIL + 1))
+    return 1
+  fi
+
+  # W3SVC must NOT depend on indexHtml
+  local w3svc_block
+  w3svc_block=$(awk "/^  - name: .W3SVC/ { found=1 } found && (!/^  - name: / || /W3SVC/) { print } /^  - name: / && !/W3SVC/ { found=0 }" "${out}")
+  if echo "${w3svc_block}" | grep -q "\[resourceId('Microsoft.DSC/PowerShell','indexHtml')]"; then
+    echo "  FAIL: W3SVC incorrectly depends on indexHtml"
+    echo "  W3SVC block:"
+    echo "${w3svc_block}" | sed 's/^/    /'
+    FAIL=$((FAIL + 1))
+    return 1
+  fi
+
+  # W3SVC must depend on Web-Server
+  if ! echo "${w3svc_block}" | grep -q "\[resourceId('Microsoft.DSC/PowerShell','Web-Server')]"; then
+    echo "  FAIL: W3SVC does not depend on Web-Server"
+    echo "  W3SVC block:"
+    echo "${w3svc_block}" | sed 's/^/    /'
+    FAIL=$((FAIL + 1))
+    return 1
+  fi
+
+  echo "  PASS (dependency ordering is correct)"
+  PASS=$((PASS + 1))
+}
+
 # Attempt a non-mutating dsc config command (get or test)
 # On Linux, missing Windows resources is expected and skipped.
 run_dsc_command() {
@@ -157,6 +217,7 @@ run_dsc_command() {
 
 # Test all examples
 validate_config "example-webserver" ".#example"
+assert_dependencies "example-webserver" ".#example"
 run_dsc_command "example-webserver" "get"
 run_dsc_command "example-webserver" "test"
 

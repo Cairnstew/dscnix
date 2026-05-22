@@ -6,6 +6,27 @@ let
 
   escapeYamlString = s: replaceStrings [ "'" ] [ "''" ] s;
 
+  resources = config.dsc.resources or {};
+
+  # Collect all dependency names referenced across all resources
+  allDeps = builtins.concatLists (mapAttrsToList (name: res: res.dependsOn or []) resources);
+  uniqueDeps = lib.unique allDeps;
+  knownResourceNames = builtins.attrNames resources;
+  unknownDeps = builtins.filter (dep: !(builtins.elem dep knownResourceNames)) uniqueDeps;
+
+  # Validate dependencies - abort with helpful message if unknown refs exist
+  validatedDeps =
+    if unknownDeps == [] then
+      true
+    else
+      builtins.throw ''
+        dscnix: dependsOn references unknown resource(s): ${lib.concatStringsSep ", " unknownDeps}
+        Known resources: ${lib.concatStringsSep ", " knownResourceNames}
+      '';
+
+  # Trigger validation
+  _ = validatedDeps;
+
   yamlScalar = v:
     if v == null then "null"
     else if isBool v then (if v then "true" else "false")
@@ -68,8 +89,6 @@ let
       "${baseIndent}${k}:\n${yamlValue v (baseIndent + "  ")}"
     else
       "${baseIndent}${k}: ${yamlScalar v}";
-
-  resources = config.dsc.resources or {};
 
   emitResource = name: resource:
     let

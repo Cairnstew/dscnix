@@ -30,6 +30,14 @@
 
           # DSC binary is only available for x86_64-linux
           # See: https://github.com/PowerShell/DSC/releases
+          #
+          # To update:
+          # 1. Visit https://github.com/PowerShell/DSC/releases
+          # 2. Find the latest release (e.g., v3.2.0)
+          # 3. Update 'version' below (without the 'v' prefix)
+          # 4. Update the sha256 by running:
+          #    nix-prefetch-url https://github.com/PowerShell/DSC/releases/download/v<version>/DSC-<version>-x86_64-linux.tar.gz
+          # 5. Replace the sha256 string below with the output
           dsc = pkgs.stdenv.mkDerivation rec {
             pname = "dsc";
             version = "3.1.0";

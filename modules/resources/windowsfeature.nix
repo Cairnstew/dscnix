@@ -27,13 +27,13 @@ in
       };
     }));
     default = {};
-    description = "Windows features via the PowerShell DSC adapter (PSDscResources).";
+    description = "Windows features via the Windows PowerShell 5.1 adapter (PSDscResources).";
   };
 
   config.dsc.resources = mkMerge (
     mapAttrsToList (name: feature: {
       "${name}" = {
-        type = "Microsoft.DSC/PowerShell";
+        type = "Microsoft.Windows/WindowsPowerShell";
         properties = {
           resources = [
             {

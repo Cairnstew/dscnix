@@ -124,7 +124,7 @@ assert_dependencies() {
   cp "${BUILD_DIR}/${name}-dep-result" "${out}"
 
   # File resource must depend on WindowsFeature
-  if ! grep -q "\[resourceId('Microsoft.DSC/PowerShell','Web-Server')]" "${out}"; then
+  if ! grep -q "\[resourceId('Microsoft.Windows/WindowsPowerShell','Web-Server')]" "${out}"; then
     echo "  FAIL: Could not find expected resourceId for Web-Server in ${out}"
     FAIL=$((FAIL + 1))
     return 1
@@ -133,7 +133,7 @@ assert_dependencies() {
   # indexHtml depends on Web-Server
   local indexhtml_block
   indexhtml_block=$(awk "/^  - name: .indexHtml/ { found=1 } found && (!/^  - name: / || /indexHtml/) { print } /^  - name: / && !/indexHtml/ { found=0 }" "${out}")
-  if ! echo "${indexhtml_block}" | grep -q "\[resourceId('Microsoft.DSC/PowerShell','Web-Server')]"; then
+  if ! echo "${indexhtml_block}" | grep -q "\[resourceId('Microsoft.Windows/WindowsPowerShell','Web-Server')]"; then
     echo "  FAIL: indexHtml does not correctly depend on Web-Server"
     echo "  indexHtml block:"
     echo "${indexhtml_block}" | sed 's/^/    /'
@@ -144,7 +144,7 @@ assert_dependencies() {
   # W3SVC must NOT depend on indexHtml
   local w3svc_block
   w3svc_block=$(awk "/^  - name: .W3SVC/ { found=1 } found && (!/^  - name: / || /W3SVC/) { print } /^  - name: / && !/W3SVC/ { found=0 }" "${out}")
-  if echo "${w3svc_block}" | grep -q "\[resourceId('Microsoft.DSC/PowerShell','indexHtml')]"; then
+  if echo "${w3svc_block}" | grep -q "\[resourceId('Microsoft.Windows/WindowsPowerShell','indexHtml')]"; then
     echo "  FAIL: W3SVC incorrectly depends on indexHtml"
     echo "  W3SVC block:"
     echo "${w3svc_block}" | sed 's/^/    /'
@@ -153,7 +153,7 @@ assert_dependencies() {
   fi
 
   # W3SVC must depend on Web-Server
-  if ! echo "${w3svc_block}" | grep -q "\[resourceId('Microsoft.DSC/PowerShell','Web-Server')]"; then
+  if ! echo "${w3svc_block}" | grep -q "\[resourceId('Microsoft.Windows/WindowsPowerShell','Web-Server')]"; then
     echo "  FAIL: W3SVC does not depend on Web-Server"
     echo "  W3SVC block:"
     echo "${w3svc_block}" | sed 's/^/    /'

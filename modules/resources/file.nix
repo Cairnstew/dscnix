@@ -26,13 +26,13 @@ in
       };
     }));
     default = {};
-    description = "File resources via the PowerShell DSC adapter (PSDesiredStateConfiguration).";
+    description = "File resources via the Windows PowerShell 5.1 adapter (PSDesiredStateConfiguration).";
   };
 
   config.dsc.resources = mkMerge (
     mapAttrsToList (name: file: {
       "${name}" = {
-        type = "Microsoft.DSC/PowerShell";
+        type = "Microsoft.Windows/WindowsPowerShell";
         properties = {
           resources = [
             {

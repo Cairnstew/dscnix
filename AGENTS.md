@@ -42,7 +42,7 @@ nix run github:Cairnstew/dscnix -- ./my-config.nix > output.yaml
   - `configurationName` is emitted as a YAML comment header.
   - `nodes` and `imports` are legacy PowerShell DSC concepts and are **not** emitted in YAML output.
 - `modules/resources/*.nix` — higher-level helpers that map into `dsc.resources` via `lib.mkMerge` + `mapAttrsToList`.
-  - Legacy PSDscResources: `dsc.windowsFeatures`, `dsc.files`, `dsc.services` (wrapped in `Microsoft.DSC/PowerShell` adapter)
+  - Legacy PSDscResources: `dsc.windowsFeatures`, `dsc.files`, `dsc.services` (wrapped in `Microsoft.Windows/WindowsPowerShell` adapter)
   - Native DSC v3: `dsc.registry`, `dsc.windowsServices`, `dsc.firewallRules`, `dsc.optionalFeatures`, `dsc.featuresOnDemand`, `dsc.runCommands`, `dsc.powerShellScripts`, `dsc.windowsPowerShellScripts`, `dsc.osInfo`, `dsc.rebootPending`
 - `cli/dscnix` — shell script that wraps `nix-instantiate --eval --json` to evaluate user modules and print YAML to stdout.
 - `examples/` — reference configurations that demonstrate all supported resource types.
@@ -63,7 +63,7 @@ nix run github:Cairnstew/dscnix -- ./my-config.nix > output.yaml
 
 ## Legacy PowerShell DSC resources
 
-Classic MOF-based resources (WindowsFeature, File, Service) are automatically wrapped in a `Microsoft.DSC/PowerShell` adapter block so they can coexist with native DSC v3 resources in the same YAML document. The inner resource types use `PSDscResources/WindowsFeature`, `PSDesiredStateConfiguration/File`, and `PSDesiredStateConfiguration/Service`.
+Classic MOF-based resources (WindowsFeature, File, Service) are automatically wrapped in a `Microsoft.Windows/WindowsPowerShell` adapter block so they can coexist with native DSC v3 resources in the same YAML document. The inner resource types use `PSDscResources/WindowsFeature`, `PSDesiredStateConfiguration/File`, and `PSDesiredStateConfiguration/Service`.
 
 ## Read-only resources in DSC v3.1.0
 

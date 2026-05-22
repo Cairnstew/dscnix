@@ -23,13 +23,13 @@ in
       };
     }));
     default = {};
-    description = "Windows services via the PowerShell DSC adapter (PSDesiredStateConfiguration).";
+    description = "Windows services via the Windows PowerShell 5.1 adapter (PSDesiredStateConfiguration).";
   };
 
   config.dsc.resources = mkMerge (
     mapAttrsToList (name: service: {
       "${name}" = {
-        type = "Microsoft.DSC/PowerShell";
+        type = "Microsoft.Windows/WindowsPowerShell";
         properties = {
           resources = [
             {

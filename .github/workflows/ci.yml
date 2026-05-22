@@ -27,6 +27,22 @@ jobs:
       - name: Run nix flake check
         run: nix flake check
 
+  build-example:
+    name: Build Example
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v25
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Build example-webserver
+        run: nix build .#example-webserver --show-trace
+
   test:
     name: Test Suite
     runs-on: ubuntu-latest

@@ -8,7 +8,7 @@ Define your Windows infrastructure declaratively in Nix, and get a validated DSC
 
 - **Declarative Windows configuration** — Manage features, services, registry keys, firewall rules, files, and more using familiar Nix syntax.
 - **Native DSC v3 resources** — Emits modern `Microsoft.Windows/*` and `Microsoft.DSC/*` resource types.
-- **Legacy PSDscResources support** — Classic `WindowsFeature`, `File`, and `Service` resources are automatically wrapped in the `Microsoft.DSC/PowerShell` adapter.
+- **Legacy PSDscResources support** — Classic `WindowsFeature`, `File`, and `Service` resources are automatically wrapped in the `Microsoft.Windows/WindowsPowerShell` adapter.
 - **Dependency resolution** — `dependsOn` between resources is automatically translated to DSC v3 `[resourceId('Type','Name')]` syntax.
 - **CLI and library API** — Use the `dscnix` command-line tool, import the flake as a library, or run it remotely with `nix run`.
 - **Validation** — Built-in test suite checks that generated YAML is structurally valid using the official `dsc` binary.

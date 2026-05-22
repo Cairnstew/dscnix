@@ -63,7 +63,7 @@ with lib;
       };
     };
 
-    # Legacy PSDscResources (wrapped in Microsoft.DSC/PowerShell adapter)
+    # Legacy PSDscResources (wrapped in Microsoft.Windows/WindowsPowerShell adapter)
     windowsFeatures = {
       "Telnet-Client" = {
         ensure = "Absent";

@@ -28,6 +28,8 @@
         let
           pkgs = nixpkgs.legacyPackages.${system};
 
+          # DSC binary is only available for x86_64-linux
+          # See: https://github.com/PowerShell/DSC/releases
           dsc = pkgs.stdenv.mkDerivation rec {
             pname = "dsc";
             version = "3.1.0";
@@ -219,10 +221,12 @@ for entry in root.findall("a:entry", ns):
 
         in
         {
-          inherit dsc dscSearch dscnix;
+          inherit dscSearch dscnix;
           example-webserver = pkgs.writeText "dsc-configuration.yaml" (self.lib.evalDscConfiguration [ ./examples/webserver.nix ]);
           example-workstation = pkgs.writeText "dsc-configuration.yaml" (self.lib.evalDscConfiguration [ ./examples/windows-workstation.nix ]);
           example-native = pkgs.writeText "dsc-configuration.yaml" (self.lib.evalDscConfiguration [ ./examples/native-windows.nix ]);
+        } // lib.optionalAttrs (system == "x86_64-linux") {
+          inherit dsc;
         });
 
       apps = forAllSystems (system: {
@@ -241,7 +245,6 @@ for entry in root.findall("a:entry", ns):
             name = "dscnix";
 
             packages = with pkgs; [
-              self.packages.${system}.dsc
               self.packages.${system}.dscSearch
               self.packages.${system}.dscnix
               jq
@@ -249,6 +252,8 @@ for entry in root.findall("a:entry", ns):
               python3
               git
               act
+            ] ++ lib.optionals (system == "x86_64-linux") [
+              self.packages.${system}.dsc
             ];
 
             shellHook = ''

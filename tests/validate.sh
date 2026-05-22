@@ -215,19 +215,60 @@ run_dsc_command() {
   return 1
 }
 
+# Test that the dscnix CLI produces valid output matching the derivation output
+test_cli() {
+  local name="$1"
+  local example_file="$2"
+  local out="${BUILD_DIR}/${name}-cli.yaml"
+  local drv_out="${BUILD_DIR}/${name}-drv.yaml"
+
+  echo ""
+  echo "  [TEST] ${name} CLI output"
+
+  nix build ".#example-${name}" --out-link "${BUILD_DIR}/${name}-drv-result" 2>/dev/null || {
+    echo "  FAIL: Build failed for example ${name}"
+    FAIL=$((FAIL + 1))
+    return 1
+  }
+  cp "${BUILD_DIR}/${name}-drv-result" "${drv_out}"
+
+  nix run ".#dscnix" -- "${example_file}" > "${out}" 2>/dev/null || {
+    echo "  FAIL: dscnix CLI failed for ${name}"
+    FAIL=$((FAIL + 1))
+    return 1
+  }
+
+  if diff -q "${drv_out}" "${out}" >/dev/null; then
+    echo "  PASS (CLI output matches derivation output)"
+    PASS=$((PASS + 1))
+    return 0
+  else
+    echo "  FAIL: CLI output differs from derivation output"
+    echo "  Diff:"
+    diff "${drv_out}" "${out}" | sed 's/^/    /' || true
+    FAIL=$((FAIL + 1))
+    return 1
+  fi
+}
+
 # Test all examples
-validate_config "example-webserver" ".#example"
-assert_dependencies "example-webserver" ".#example"
+validate_config "example-webserver" ".#example-webserver"
+assert_dependencies "example-webserver" ".#example-webserver"
 run_dsc_command "example-webserver" "get"
 run_dsc_command "example-webserver" "test"
 
-validate_config "example-workstation" ".#exampleWorkstation"
+validate_config "example-workstation" ".#example-workstation"
 run_dsc_command "example-workstation" "get"
 run_dsc_command "example-workstation" "test"
 
-validate_config "example-native" ".#exampleNative"
+validate_config "example-native" ".#example-native"
 run_dsc_command "example-native" "get"
 run_dsc_command "example-native" "test"
+
+# Test CLI produces identical output to derivations
+test_cli "webserver" "./examples/webserver.nix"
+test_cli "workstation" "./examples/windows-workstation.nix"
+test_cli "native" "./examples/native-windows.nix"
 
 echo ""
 echo "  ──────────────────────────────────────────────"

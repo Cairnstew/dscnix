@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+DSCNIX_ROOT="@DSCNIX_ROOT@"
+
+usage() {
+  cat <<EOF
+Usage: dscnix [OPTIONS] <module.nix> [<module2.nix> ...]
+
+  Generate DSC v3 YAML configuration from NixOS-style modules.
+  Outputs to stdout.
+
+Options:
+  -h, --help    Show this help message
+
+Examples:
+  dscnix ./my-config.nix > output.yaml
+  dscnix ./base.nix ./overrides.nix > output.yaml
+  nix run github:seanc/dscnix -- ./my-config.nix > output.yaml
+EOF
+}
+
+if [ $# -eq 0 ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+  usage
+  exit 0
+fi
+
+MODULES_EXPR=""
+for arg in "$@"; do
+  if [ "$arg" = "-h" ] || [ "$arg" = "--help" ]; then
+    usage
+    exit 0
+  fi
+  # Convert to absolute path if relative
+  if [[ "$arg" != /* ]]; then
+    arg="$(pwd)/$arg"
+  fi
+  MODULES_EXPR="$MODULES_EXPR (builtins.toPath \"$arg\")"
+done
+
+# nix eval --impure allows builtins.getFlake and builtins.currentSystem.
+# --raw outputs the evaluated string directly without JSON encoding.
+nix eval --impure --raw --expr "
+  let
+    dscnix = builtins.getFlake \"path:${DSCNIX_ROOT}\";
+    pkgs = dscnix.inputs.nixpkgs.legacyPackages.\${builtins.currentSystem};
+    lib = pkgs.lib;
+    modules = [ $MODULES_EXPR ];
+  in
+  dscnix.lib.evalDscConfiguration modules
+"

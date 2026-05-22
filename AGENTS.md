@@ -5,10 +5,34 @@ A Nix flake that generates **DSC v3 YAML** configuration documents from the NixO
 ## Working in this repo
 
 - Run all Nix commands from the `dscnix/` directory (the flake root).
-- Build the example: `nix build .#example --show-trace`
+- Build an example: `nix build .#examples.webserver --show-trace`
+- Run the CLI: `nix run .#dscnix -- ./examples/webserver.nix > output.yaml`
+- Or install the CLI: `nix build .#dscnix && ./result/bin/dscnix ./my-config.nix > output.yaml`
 - Validate the flake: `nix flake check`
 - Run the test suite: `./tests/validate.sh`
 - There is no CI or formatter config. Verification is `nix flake check` + `nix build` + `./tests/validate.sh`.
+
+## Using in another flake
+
+```nix
+{
+  inputs.dscnix.url = "github:seanc/dscnix";
+
+  outputs = { self, nixpkgs, dscnix }:
+    let
+      pkgs = nixpkgs.legacyPackages.x86_64-linux;
+    in
+    {
+      packages.x86_64-linux.myConfig = pkgs.writeText "config.yaml"
+        (dscnix.lib.evalDscConfiguration [ ./my-module.nix ]);
+    };
+}
+```
+
+Or via the CLI from another repo:
+```bash
+nix run github:seanc/dscnix -- ./my-config.nix > output.yaml
+```
 
 ## Architecture
 
@@ -20,6 +44,8 @@ A Nix flake that generates **DSC v3 YAML** configuration documents from the NixO
 - `modules/resources/*.nix` — higher-level helpers that map into `dsc.resources` via `lib.mkMerge` + `mapAttrsToList`.
   - Legacy PSDscResources: `dsc.windowsFeatures`, `dsc.files`, `dsc.services` (wrapped in `Microsoft.DSC/PowerShell` adapter)
   - Native DSC v3: `dsc.registry`, `dsc.windowsServices`, `dsc.firewallRules`, `dsc.optionalFeatures`, `dsc.featuresOnDemand`, `dsc.runCommands`, `dsc.powerShellScripts`, `dsc.windowsPowerShellScripts`, `dsc.osInfo`, `dsc.rebootPending`
+- `cli/dscnix` — shell script that wraps `nix-instantiate --eval --json` to evaluate user modules and print YAML to stdout.
+- `examples/` — reference configurations that demonstrate all supported resource types.
 
 ## Adding a new resource type
 

@@ -1,4 +1,4 @@
-{ pkgs, lib, modules }:
+{ lib, modules }:
 let
   coreModule = ../modules/core.nix;
 
@@ -19,4 +19,4 @@ let
 
   emit = import ./emit.nix { inherit lib config; };
 in
-pkgs.writeText "dsc-configuration.yaml" emit
+emit
